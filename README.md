@@ -1,56 +1,48 @@
 <div align="center">
 
-# LiteTC-PolypNet-B0
+# Boundary-Guided Colorectal Polyp Segmentation
 
-### Lightweight Boundary-Aware Colorectal Polyp Segmentation
+### Lightweight Boundary-Guided Colorectal Polyp Segmentation with Size-Aware Training
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Dataset](https://img.shields.io/badge/Dataset-Kvasir--SEG-7B2CBF)](https://datasets.simula.no/kvasir-seg/)
+[![Conference](https://img.shields.io/badge/INCISCOS_V_2026-Accepted-2ea44f)](https://inciscos.ute.edu.ec/)
 
 </div>
 
 ## Overview
 
-LiteTC-PolypNet-B0 is a compact segmentation network for locating colorectal polyps in colonoscopy images. It combines EfficientNet-B0 features with multi-scale context, boundary guidance, attention-based refinement, and deep supervision.
+This project studies lightweight segmentation of colorectal polyps in colonoscopy images. The method uses an EfficientNet-B0 encoder, multi-scale context, and a boundary prediction branch whose attention signal guides decoder features. Size-aware sampling increases exposure to underrepresented small and very large polyps.
 
-## Architecture
+The paper, **“Lightweight Boundary-Guided Colorectal Polyp Segmentation with Size-Aware Training”** (Paper 65), was accepted for presentation at INCISCOS V 2026 in Quito, Ecuador (November 17–19, 2026).
 
-```mermaid
-flowchart LR
-    A["Colonoscopy image"] --> B["EfficientNet-B0 encoder"]
-    B --> C["Multi-scale context"]
-    B --> D["Low-level boundary branch"]
-    C --> E["Boundary-guided decoder"]
-    D --> E
-    E --> F["CBAM refinement"]
-    F --> G["Polyp mask"]
-```
+> The submitted notebook uses the implementation name **LiteTC-PolypNet-B0-SWA**; the manuscript refers to the proposed approach as **BG-PolypNet-SWA**.
 
-## Dataset and training
+## Method at a glance
 
-- Dataset: 1,000 Kvasir-SEG image–mask pairs
-- Split: 80% train, 10% validation, 10% test
-- Split stratification: mask-area groups
-- Input resolution: 352 × 352
-- Loss: BCE + Dice + focal + boundary + auxiliary supervision
+- **Dataset:** Kvasir-SEG, 1,000 image-mask pairs
+- **Partition:** 800 training, 100 validation, and 100 held-out test images; mask-area-stratified, seed 42
+- **Input:** acquisition-border crop followed by resize to 352 × 352
+- **Boundary guidance:** one supervised boundary map is reused as a residual attention gate in the decoder
+- **Training:** size-aware sampling, composite segmentation and boundary losses, and stochastic weight averaging
+- **Inference selection:** validation-selected threshold and horizontal-flip TTA; settings frozen before final test evaluation
 
-## Reported results
+## Final test results
 
-| Metric | Single scale | TTA + post-processing |
-|---|---:|---:|
-| Dice | **0.8983** | **0.9045** |
-| IoU | **0.8154** | **0.8257** |
-| Precision | 0.9096 | 0.9189 |
-| Recall | 0.8873 | 0.8906 |
-| Accuracy | 0.9700 | 0.9719 |
+The final single-model checkpoint was evaluated on the 100-image held-out test partition.
 
-| Efficiency measure | Result |
+| Metric | Result |
 |---|---:|
-| Trainable parameters | **4.804M** |
-| MACs | **1.844G** |
-| Batch-1 latency | **18.40 ms/image** |
-| Throughput | **54.35 FPS** |
+| Dice | **0.9213** |
+| IoU | **0.8731** |
+| Precision | **0.9281** |
+| Recall | **0.9400** |
+| Parameters | **4.804M** |
+| MACs at 352 × 352 | **1.844G** |
+| Throughput | **43.7 FPS** |
+
+The paper reports the final Stage 2 + SWA configuration. Literature comparisons are reported as published by their respective authors and were not reproduced under a common training protocol.
 
 ## Repository contents
 
@@ -61,15 +53,11 @@ litetc-polypnet-b0/
 └── README.md
 ```
 
-The notebook output was cleared for a smaller, credential-safe public release. Run it in sequence to regenerate figures, checkpoints, and evaluation tables.
+The notebook output was cleared for the public release. Run it in sequence to regenerate the training logs, checkpoints, figures, and evaluation tables. The final accepted-paper analysis also includes validation-only selection and test-set reporting.
 
-## Reproducibility boundaries
+## Reproducibility and scope
 
-The current evidence covers one random split of Kvasir-SEG. Direct same-protocol baselines, cross-dataset evaluation, repeated seeds, and video-level temporal testing are still needed before making broader generalization claims.
-
-## Responsible-use notice
-
-This repository is for research and education. It is not a clinically validated polyp-detection system.
+Results are from one fixed Kvasir-SEG split and seed. The evaluation does not establish cross-dataset generalization or clinical readiness. The code is for research and education and is not a clinically validated polyp-detection system.
 
 ## Contact
 
